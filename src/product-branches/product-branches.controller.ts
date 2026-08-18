@@ -14,8 +14,10 @@ import { CreateProductBranchDto } from './dto/create-product-branch.dto';
 import { ProductBranchResponseDto } from './dto/product-branch-response.dto';
 import { UpdateProductBranchDto } from './dto/update-product-branch.dto';
 import { ProductBranchesService } from './product-branches.service';
+import { ProductWithPriceResponseDto } from './dto/product-with-price-response.dto';
+import { FindProductByBranchAndEanParamsDto } from './dto/find-product-by-branch-and-ean-params.dto';
 
-@Controller('product-branches')
+@Controller('products')
 export class ProductBranchesController {
   constructor(private readonly service: ProductBranchesService) {}
   @Post() create(
@@ -41,5 +43,12 @@ export class ProductBranchesController {
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<void> {
     return this.service.remove(id);
+  }
+
+  @Get('branch/:branchId/ean/:ean')
+  findByBranchAndEan(
+    @Param() params: FindProductByBranchAndEanParamsDto,
+  ): Promise<ProductWithPriceResponseDto> {
+    return this.service.findProductByBranchAndEan(params.branchId, params.ean);
   }
 }

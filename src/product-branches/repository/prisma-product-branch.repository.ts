@@ -6,6 +6,7 @@ import {
 } from '../../common/errors/repository.errors';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProductBranchEntity } from '../entity/product-branch.entity';
+import { ProductBranchPriceEntity } from '../entity/product-branch-price.entity';
 import {
   CreateProductBranchData,
   IProductBranchRepository,
@@ -102,5 +103,44 @@ export class PrismaProductBranchRepository implements IProductBranchRepository {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === code
     );
+  }
+
+  async findByEanAndBranch(
+    ean: string,
+    branchId: number,
+  ): Promise<ProductBranchPriceEntity | null> {
+    const model = await this.prisma.product_branches.findFirst({
+      where: {
+        ean,
+        branch_id: branchId,
+        active: true,
+        branches: {
+          is: {
+            active: true,
+          },
+        },
+      },
+      include: {
+        price_history: {
+          orderBy: {
+            created_at: 'desc',
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!model) {
+      return null;
+    }
+
+    const latestPrice = model.price_history[0] ?? null;
+
+    return {
+      productBranchId: model.id,
+      branchId: model.branch_id,
+      price: latestPrice?.price.toString() ?? null,
+      priceUpdatedAt: latestPrice?.created_at ?? null,
+    };
   }
 }
