@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ParseBigIntPipe } from '../common/pipes/parse-bigint.pipe';
 import { PriceHistoryResponseDto } from '../price-history/dto/price-history-response.dto';
@@ -18,6 +19,8 @@ import { ProductWithPriceResponseDto } from './dto/product-with-price-response.d
 import { UpdateProductBranchDto } from './dto/update-product-branch.dto';
 import { UpdateProductPriceDto } from './dto/update-product-price.dto';
 import { ProductBranchesService } from './product-branches.service';
+import { FindPriceHistoryQueryDto } from '../price-history/dto/find-price-history-query.dto';
+import { PaginatedPriceHistoryResponseDto } from '../price-history/dto/paginated-price-history-response.dto';
 
 @Controller('products')
 export class ProductBranchesController {
@@ -40,6 +43,18 @@ export class ProductBranchesController {
     @Param() params: FindProductByBranchAndEanParamsDto,
   ): Promise<ProductWithPriceResponseDto> {
     return this.service.findProductByBranchAndEan(params.branchId, params.ean);
+  }
+
+  @Get('branch/:branchId/ean/:ean/price-history')
+  findPriceHistory(
+    @Param() params: FindProductByBranchAndEanParamsDto,
+    @Query() query: FindPriceHistoryQueryDto,
+  ): Promise<PaginatedPriceHistoryResponseDto> {
+    return this.service.findPriceHistoryByBranchAndEan(
+      params.branchId,
+      params.ean,
+      query,
+    );
   }
 
   @Patch('branch/:branchId/ean/:ean/price')

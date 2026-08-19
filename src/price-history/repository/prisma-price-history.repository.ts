@@ -8,6 +8,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { PriceHistoryEntity } from '../entity/price-history.entity';
 import {
   CreatePriceHistoryData,
+  FindPriceHistoryPagination,
+  FindPriceHistoryResult,
   IPriceHistoryRepository,
   UpdatePriceHistoryData,
 } from './price-history.repository.interface';
@@ -33,15 +35,55 @@ export class PrismaPriceHistoryRepository implements IPriceHistoryRepository {
 
   async findAll(): Promise<PriceHistoryEntity[]> {
     return (
-      await this.prisma.price_history.findMany({ orderBy: { id: 'asc' } })
+      await this.prisma.price_history.findMany({
+        orderBy: {
+          id: 'asc',
+        },
+      })
     ).map((record) => this.toEntity(record));
   }
 
   async findById(id: bigint): Promise<PriceHistoryEntity | null> {
     const record = await this.prisma.price_history.findUnique({
-      where: { id },
+      where: {
+        id,
+      },
     });
+
     return record ? this.toEntity(record) : null;
+  }
+
+  async findByProductBranchId(
+    productBranchId: bigint,
+    pagination: FindPriceHistoryPagination,
+  ): Promise<FindPriceHistoryResult> {
+    const where: Prisma.price_historyWhereInput = {
+      product_branch_id: productBranchId,
+    };
+
+    const [records, total] = await this.prisma.$transaction([
+      this.prisma.price_history.findMany({
+        where,
+        skip: pagination.skip,
+        take: pagination.take,
+        orderBy: [
+          {
+            created_at: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
+      }),
+      this.prisma.price_history.count({
+        where,
+      }),
+    ]);
+
+    return {
+      records: records.map((record) => this.toEntity(record)),
+      total,
+    };
   }
 
   async update(
@@ -51,29 +93,45 @@ export class PrismaPriceHistoryRepository implements IPriceHistoryRepository {
     try {
       return this.toEntity(
         await this.prisma.price_history.update({
-          where: { id },
+          where: {
+            id,
+          },
           data: this.toPersistence(data),
         }),
       );
     } catch (error: unknown) {
-      if (this.hasCode(error, 'P2025')) return null;
+      if (this.hasCode(error, 'P2025')) {
+        return null;
+      }
+
       throw this.translateError(error);
     }
   }
 
   async delete(id: bigint): Promise<boolean> {
     try {
-      await this.prisma.price_history.delete({ where: { id } });
+      await this.prisma.price_history.delete({
+        where: {
+          id,
+        },
+      });
+
       return true;
     } catch (error: unknown) {
-      if (this.hasCode(error, 'P2025')) return false;
+      if (this.hasCode(error, 'P2025')) {
+        return false;
+      }
+
       throw this.translateError(error);
     }
   }
 
   private toPersistence(
     data: CreatePriceHistoryData | UpdatePriceHistoryData,
-  ): { product_branch_id?: bigint; price?: Prisma.Decimal } {
+  ): {
+    product_branch_id?: bigint;
+    price?: Prisma.Decimal;
+  } {
     return {
       product_branch_id: data.productBranchId,
       price:
@@ -91,10 +149,14 @@ export class PrismaPriceHistoryRepository implements IPriceHistoryRepository {
   }
 
   private translateError(error: unknown): unknown {
-    if (this.hasCode(error, 'P2002'))
+    if (this.hasCode(error, 'P2002')) {
       return new RepositoryUniqueConstraintError();
-    if (this.hasCode(error, 'P2003'))
+    }
+
+    if (this.hasCode(error, 'P2003')) {
       return new RepositoryForeignKeyConstraintError();
+    }
+
     return error;
   }
 

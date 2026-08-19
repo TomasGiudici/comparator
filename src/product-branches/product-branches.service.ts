@@ -28,6 +28,8 @@ import { ProductBranchMapper } from './mapper/product-branch.mapper';
 import { ProductWithPriceMapper } from './mapper/product-with-price.mapper';
 import { PRODUCT_BRANCH_REPOSITORY } from './repository/product-branch.repository.interface';
 import type { IProductBranchRepository } from './repository/product-branch.repository.interface';
+import { FindPriceHistoryQueryDto } from '../price-history/dto/find-price-history-query.dto';
+import { PaginatedPriceHistoryResponseDto } from '../price-history/dto/paginated-price-history-response.dto';
 
 @Injectable()
 export class ProductBranchesService {
@@ -171,5 +173,27 @@ export class ProductBranchesService {
     }
 
     throw error;
+  }
+
+  async findPriceHistoryByBranchAndEan(
+    branchId: number,
+    ean: string,
+    query: FindPriceHistoryQueryDto,
+  ): Promise<PaginatedPriceHistoryResponseDto> {
+    const productBranch = await this.productBranchRepository.findByEanAndBranch(
+      ean,
+      branchId,
+    );
+
+    if (!productBranch) {
+      throw new NotFoundException(
+        'El producto no está disponible en la sucursal indicada.',
+      );
+    }
+
+    return this.priceHistoryService.findByProductBranchId(
+      productBranch.productBranchId,
+      query,
+    );
   }
 }

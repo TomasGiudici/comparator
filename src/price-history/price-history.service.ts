@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { RepositoryForeignKeyConstraintError } from '../common/errors/repository.errors';
 import { CreatePriceHistoryDto } from './dto/create-price-history.dto';
+import { FindPriceHistoryQueryDto } from './dto/find-price-history-query.dto';
+import { PaginatedPriceHistoryResponseDto } from './dto/paginated-price-history-response.dto';
 import { PriceHistoryResponseDto } from './dto/price-history-response.dto';
 import { UpdatePriceHistoryDto } from './dto/update-price-history.dto';
 import { PriceHistoryMapper } from './mapper/price-history.mapper';
@@ -53,6 +55,37 @@ export class PriceHistoryService {
     }
 
     return PriceHistoryMapper.toResponse(entity);
+  }
+
+  async findByProductBranchId(
+    productBranchId: bigint,
+    query: FindPriceHistoryQueryDto,
+  ): Promise<PaginatedPriceHistoryResponseDto> {
+    const { page, limit } = query;
+
+    const result = await this.repository.findByProductBranchId(
+      productBranchId,
+      {
+        skip: (page - 1) * limit,
+        take: limit,
+      },
+    );
+
+    const totalPages = Math.ceil(result.total / limit);
+
+    return {
+      data: result.records.map((entity) =>
+        PriceHistoryMapper.toResponse(entity),
+      ),
+      meta: {
+        page,
+        limit,
+        total: result.total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async update(
