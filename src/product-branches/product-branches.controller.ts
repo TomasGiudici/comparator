@@ -10,39 +10,29 @@ import {
   Post,
 } from '@nestjs/common';
 import { ParseBigIntPipe } from '../common/pipes/parse-bigint.pipe';
+import { PriceHistoryResponseDto } from '../price-history/dto/price-history-response.dto';
 import { CreateProductBranchDto } from './dto/create-product-branch.dto';
-import { ProductBranchResponseDto } from './dto/product-branch-response.dto';
-import { UpdateProductBranchDto } from './dto/update-product-branch.dto';
-import { ProductBranchesService } from './product-branches.service';
-import { ProductWithPriceResponseDto } from './dto/product-with-price-response.dto';
 import { FindProductByBranchAndEanParamsDto } from './dto/find-product-by-branch-and-ean-params.dto';
+import { ProductBranchResponseDto } from './dto/product-branch-response.dto';
+import { ProductWithPriceResponseDto } from './dto/product-with-price-response.dto';
+import { UpdateProductBranchDto } from './dto/update-product-branch.dto';
+import { UpdateProductPriceDto } from './dto/update-product-price.dto';
+import { ProductBranchesService } from './product-branches.service';
 
 @Controller('products')
 export class ProductBranchesController {
   constructor(private readonly service: ProductBranchesService) {}
-  @Post() create(
+
+  @Post()
+  create(
     @Body() dto: CreateProductBranchDto,
   ): Promise<ProductBranchResponseDto> {
     return this.service.create(dto);
   }
-  @Get() findAll(): Promise<ProductBranchResponseDto[]> {
+
+  @Get()
+  findAll(): Promise<ProductBranchResponseDto[]> {
     return this.service.findAll();
-  }
-  @Get(':id') findOne(
-    @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<ProductBranchResponseDto> {
-    return this.service.findOne(id);
-  }
-  @Patch(':id') update(
-    @Param('id', ParseBigIntPipe) id: bigint,
-    @Body() dto: UpdateProductBranchDto,
-  ): Promise<ProductBranchResponseDto> {
-    return this.service.update(id, dto);
-  }
-  @Delete(':id') @HttpCode(HttpStatus.NO_CONTENT) remove(
-    @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<void> {
-    return this.service.remove(id);
   }
 
   @Get('branch/:branchId/ean/:ean')
@@ -50,5 +40,34 @@ export class ProductBranchesController {
     @Param() params: FindProductByBranchAndEanParamsDto,
   ): Promise<ProductWithPriceResponseDto> {
     return this.service.findProductByBranchAndEan(params.branchId, params.ean);
+  }
+
+  @Patch('branch/:branchId/ean/:ean/price')
+  updatePrice(
+    @Param() params: FindProductByBranchAndEanParamsDto,
+    @Body() dto: UpdateProductPriceDto,
+  ): Promise<PriceHistoryResponseDto> {
+    return this.service.updateProductPrice(params.branchId, params.ean, dto);
+  }
+
+  @Get(':id')
+  findOne(
+    @Param('id', ParseBigIntPipe) id: bigint,
+  ): Promise<ProductBranchResponseDto> {
+    return this.service.findOne(id);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseBigIntPipe) id: bigint,
+    @Body() dto: UpdateProductBranchDto,
+  ): Promise<ProductBranchResponseDto> {
+    return this.service.update(id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id', ParseBigIntPipe) id: bigint): Promise<void> {
+    return this.service.remove(id);
   }
 }

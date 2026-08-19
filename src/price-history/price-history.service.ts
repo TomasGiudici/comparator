@@ -20,13 +20,20 @@ export class PriceHistoryService {
   ) {}
 
   async create(dto: CreatePriceHistoryDto): Promise<PriceHistoryResponseDto> {
+    return this.createForProductBranch(BigInt(dto.productBranchId), dto.price);
+  }
+
+  async createForProductBranch(
+    productBranchId: bigint,
+    price: string,
+  ): Promise<PriceHistoryResponseDto> {
     try {
-      return PriceHistoryMapper.toResponse(
-        await this.repository.create({
-          productBranchId: BigInt(dto.productBranchId),
-          price: dto.price,
-        }),
-      );
+      const entity = await this.repository.create({
+        productBranchId,
+        price,
+      });
+
+      return PriceHistoryMapper.toResponse(entity);
     } catch (error: unknown) {
       this.translateRelationError(error);
     }
@@ -40,8 +47,11 @@ export class PriceHistoryService {
 
   async findOne(id: bigint): Promise<PriceHistoryResponseDto> {
     const entity = await this.repository.findById(id);
-    if (!entity)
+
+    if (!entity) {
       throw new NotFoundException('Registro de precio no encontrado.');
+    }
+
     return PriceHistoryMapper.toResponse(entity);
   }
 
@@ -57,8 +67,11 @@ export class PriceHistoryService {
             : BigInt(dto.productBranchId),
         price: dto.price,
       });
-      if (!entity)
+
+      if (!entity) {
         throw new NotFoundException('Registro de precio no encontrado.');
+      }
+
       return PriceHistoryMapper.toResponse(entity);
     } catch (error: unknown) {
       this.translateRelationError(error);
@@ -66,15 +79,18 @@ export class PriceHistoryService {
   }
 
   async remove(id: bigint): Promise<void> {
-    if (!(await this.repository.delete(id)))
+    if (!(await this.repository.delete(id))) {
       throw new NotFoundException('Registro de precio no encontrado.');
+    }
   }
 
   private translateRelationError(error: unknown): never {
-    if (error instanceof RepositoryForeignKeyConstraintError)
+    if (error instanceof RepositoryForeignKeyConstraintError) {
       throw new BadRequestException(
         'El producto por sucursal indicado no existe.',
       );
+    }
+
     throw error;
   }
 }

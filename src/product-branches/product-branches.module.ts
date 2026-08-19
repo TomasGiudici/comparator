@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { CatalogApiModule } from '../catalog-api/catalog-api.module';
+import { PriceHistoryModule } from '../price-history/price-history.module';
 import { ProductBranchesController } from './product-branches.controller';
 import { ProductBranchesService } from './product-branches.service';
 import { PrismaProductBranchRepository } from './repository/prisma-product-branch.repository';
 import { PRODUCT_BRANCH_REPOSITORY } from './repository/product-branch.repository.interface';
 
 @Module({
-  imports: [CatalogApiModule],
+  imports: [CatalogApiModule, PriceHistoryModule],
   controllers: [ProductBranchesController],
   providers: [
     ProductBranchesService,

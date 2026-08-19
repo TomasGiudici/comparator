@@ -1,12 +1,6 @@
 import { IsString, Matches } from 'class-validator';
 
-export class CreatePriceHistoryDto {
-  @IsString()
-  @Matches(/^[1-9]\d*$/, {
-    message: 'El productBranchId debe ser una cadena de número entero positivo',
-  })
-  productBranchId!: string;
-
+export class UpdateProductPriceDto {
   @IsString()
   @Matches(/^(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/, {
     message: 'El precio debe ser un número positivo con hasta dos decimales.',
